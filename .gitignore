@@ -13,6 +13,8 @@ prisma/migrations/*
 !prisma/migrations/20260827100000_add_harvest_executions/migration.sql
 !prisma/migrations/20260929100000_add_sep31_metadata/
 !prisma/migrations/20260929100000_add_sep31_metadata/migration.sql
+!prisma/migrations/20261017000000_bridge_supply_audit_immutability/
+!prisma/migrations/20261017000000_bridge_supply_audit_immutability/migration.sql
 docs/
 backups/
 .env

@@ -98,6 +98,39 @@ export class EventBusAlertDispatcher implements AlertDispatcher {
     }
   }
 
+  async triggerIncident(incident: {
+    summary: string;
+    dedupKey: string;
+    details: Record<string, unknown>;
+  }): Promise<void> {
+    if (!this.enabled) return;
+
+    if (this.slackWebhookUrl) {
+      await this.postSlack(this.slackWebhookUrl, { text: incident.summary });
+    }
+    if (this.pagerdutyRoutingKey) {
+      await this.postPagerduty(this.pagerdutyRoutingKey, {
+        event_action: "trigger",
+        dedup_key: incident.dedupKey,
+        payload: {
+          summary: incident.summary,
+          source: this.source,
+          severity: "critical",
+          timestamp: new Date(this.now()).toISOString(),
+          component: "bridge-supply-audit",
+          group: "cross-chain-bridge",
+          class: "supply-reconciliation",
+          custom_details: incident.details,
+        },
+      });
+    }
+    if (!this.slackWebhookUrl && !this.pagerdutyRoutingKey) {
+      logger.error(
+        `[BridgeSupplyAudit] ${incident.summary} (no Slack webhook or PagerDuty routing key configured)`,
+      );
+    }
+  }
+
   async resolve(alert: BackpressureAlert): Promise<void> {
     if (!this.enabled) return;
     const message = `Queue backlog resolved: ${alert.scope} is back to ${alert.pending} unhandled messages (threshold ${alert.threshold}).`;

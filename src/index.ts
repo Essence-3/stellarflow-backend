@@ -59,6 +59,7 @@ import { systemicRiskMonitor } from "./services/systemicRiskWiring";
 import { getEventBusService } from "./services/eventBus/eventBusService";
 import { anchorSpreadProfiler } from "./services/remittance/anchorSpreadProfiler";
 import { treasuryGovernanceTimelockAuditExporter } from "./services/governanceTimelockAuditExporter";
+import { getBridgeSupplyAuditService } from "./services/bridgeSupplyAuditService";
 
 // Load environment variables
 dotenv.config();
@@ -372,6 +373,7 @@ const shutdown = async (signal: "SIGINT" | "SIGTERM"): Promise<void> => {
     ammReserveDivergenceDetector?.stop();
     apyWorker.stop();
     storageMonitorService.stop(); // <--- ADDED
+    getBridgeSupplyAuditService().stop();
     systemHealthWatchdog.stop();
 systemicRiskMonitor.stop();
     // Issue #1055 – stop the queue monitor before Redis/RabbitMQ go away so the
@@ -498,6 +500,13 @@ httpServer.listen(PORT, async () => {
 
   complianceScreeningWorker.start();
   console.log(`🛡️ Compliance screening worker started`);
+
+  try {
+    getBridgeSupplyAuditService().start();
+    console.log("🌉 Bridge supply reconciliation audit started");
+  } catch (err) {
+    console.error("Failed to start bridge supply reconciliation audit:", err);
+  }
 
   // Issue #1067 – Verify off-chain Merkle state against Soroban ledger roots
   try {
